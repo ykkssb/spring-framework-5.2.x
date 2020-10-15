@@ -875,9 +875,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
 				if (isFactoryBean(beanName)) {
+					// 5.1 通过beanName获取FactoryBean实例
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
+						// 5.2 判断这个FactoryBean是否希望急切的初始化
 						boolean isEagerInit;
 						if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
 							isEagerInit = AccessController.doPrivileged(
@@ -889,11 +891,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 									((SmartFactoryBean<?>) factory).isEagerInit());
 						}
 						if (isEagerInit) {
+							// 5.3 如果希望急切的初始化，则通过beanName获取bean实例
 							getBean(beanName);
 						}
 					}
 				}
 				else {
+					// 6.如果beanName对应的bean不是FactoryBean，只是普通Bean，通过beanName获取bean实例
 					getBean(beanName);
 				}
 			}

@@ -104,6 +104,7 @@ final class PostProcessorRegistrationDelegate {
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
+				// 当前bean正在创建中 isSingletonCurrentlyInCreation() -> true
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
 					// 3.4 获取ppName对应的bean实例, 添加到currentRegistryProcessors中,
 					// beanFactory.getBean 方法会触发创建 ppName 对应的 bean 实例对象

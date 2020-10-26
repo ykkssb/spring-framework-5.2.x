@@ -120,10 +120,21 @@ public abstract class AopConfigUtils {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 
+		// 1.如果注册表中已经存在beanName=org.springframework.aop.config.internalAutoProxyCreator的bean，则按优先级进行选择。
+		// beanName=org.springframework.aop.config.internalAutoProxyCreator，可能存在的beanClass有三种，按优先级排序如下：
+		// InfrastructureAdvisorAutoProxyCreator、AspectJAwareAdvisorAutoProxyCreator、AnnotationAwareAspectJAutoProxyCreator
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
+
+			// 拿到已经存在的bean定义
 			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+
+			// 如果已经存在的bean的className与当前要注册的bean的className不相同，则按优先级进行选择
 			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
+
+				// 拿到已经存在的bean的优先级
 				int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
+
+				// 拿到当前要注册的bean的优先级
 				int requiredPriority = findPriorityForClass(cls);
 				if (currentPriority < requiredPriority) {
 					apcDefinition.setBeanClassName(cls.getName());
@@ -132,6 +143,7 @@ public abstract class AopConfigUtils {
 			return null;
 		}
 
+		// 2.如果注册表中还不存在，则新建一个Bean定义，并添加到注册表中
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
 		beanDefinition.setSource(source);
 		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);

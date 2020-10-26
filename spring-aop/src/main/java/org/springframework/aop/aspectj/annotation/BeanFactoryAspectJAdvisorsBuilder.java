@@ -83,15 +83,21 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 	public List<Advisor> buildAspectJAdvisors() {
 		List<String> aspectNames = this.aspectBeanNames;
 
+		// 1.如果aspectNames为空，则进行解析
 		if (aspectNames == null) {
 			synchronized (this) {
 				aspectNames = this.aspectBeanNames;
 				if (aspectNames == null) {
 					List<Advisor> advisors = new ArrayList<>();
 					aspectNames = new ArrayList<>();
+
+					// 1.1 获取所有的beanName
 					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
 					for (String beanName : beanNames) {
+
+						// 1.3 不合法的beanName则跳过，默认返回true，子类可以覆盖实现，AnnotationAwareAspectJAutoProxyCreator
+						// 实现了自己的逻辑，支持使用includePatterns进行筛选
 						if (!isEligibleBean(beanName)) {
 							continue;
 						}
@@ -101,19 +107,34 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 						if (beanType == null) {
 							continue;
 						}
+
+						// 1.4 如果beanType存在Aspect注解则进行处理
 						if (this.advisorFactory.isAspect(beanType)) {
+
+							// 将存在Aspect注解的beanName添加到aspectNames列表
 							aspectNames.add(beanName);
+
+							// 新建切面元数据
 							AspectMetadata amd = new AspectMetadata(beanType, beanName);
+
+							// 获取per-clause的类型是SINGLETON
 							if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
+
+								// 使用BeanFactory和beanName创建一个BeanFactoryAspectInstanceFactory，主要用来创建切面对象实例
 								MetadataAwareAspectInstanceFactory factory =
 										new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+
+								// 1.5 解析标记AspectJ注解中的增强方法
 								List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
 								if (this.beanFactory.isSingleton(beanName)) {
 									this.advisorsCache.put(beanName, classAdvisors);
 								}
 								else {
+									// 如果不是单例，则将factory放到缓存，之后可以通过factory来解析增强方法
 									this.aspectFactoryCache.put(beanName, factory);
 								}
+
+								// 1.7 将解析的增强器添加到advisors
 								advisors.addAll(classAdvisors);
 							}
 							else {
@@ -129,6 +150,8 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 							}
 						}
 					}
+
+					// 1.9 将解析出来的切面beanName放到缓存aspectBeanNames
 					this.aspectBeanNames = aspectNames;
 					return advisors;
 				}

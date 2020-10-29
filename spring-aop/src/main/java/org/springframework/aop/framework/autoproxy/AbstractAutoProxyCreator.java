@@ -466,8 +466,12 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
 
+		// 检查proxyTargetClass属性，判断对于给定的bean使用类代理还是接口代理，
+		// proxyTargetClass值默认为false，可以通过proxy-target-class属性设置为true
 		if (!proxyFactory.isProxyTargetClass()) {
+			// 检查preserveTargetClass属性，判断beanClass是应该基于类代理还是基于接口代理
 			if (shouldProxyTargetClass(beanClass, beanName)) {
+				// 如果是基于类代理，则将proxyTargetClass赋值为true
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
@@ -475,11 +479,13 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			}
 		}
 
+		// 将拦截器封装为Advisor（advice持有者 	通知拦截器）
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);
 		customizeProxyFactory(proxyFactory);
 
+		// 用来控制proxyFactory被配置之后，是否还允许修改通知。默认值为false（即在代理被配置之后，不允许修改代理类的配置）
 		proxyFactory.setFrozen(this.freezeProxy);
 		if (advisorsPreFiltered()) {
 			proxyFactory.setPreFiltered(true);
